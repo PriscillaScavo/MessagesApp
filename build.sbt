@@ -7,4 +7,7 @@ lazy val root = (project in file("."))
     name := "MessagesApp"
   )
 
-libraryDependencies += "org.apache.kafka" % "kafka-clients" % "2.8.0"
+libraryDependencies ++= Seq(
+  "dev.zio" %% "zio" % "2.0.0",
+  "org.apache.kafka" % "kafka-clients" % "2.8.0"
+)

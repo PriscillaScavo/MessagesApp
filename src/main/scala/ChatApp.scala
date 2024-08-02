@@ -44,12 +44,28 @@ object ChatApp extends App {
     }
     else{
       messagePrinted = false
-      println(s"$topicName choose a user to send a message between: ${topics.filter(!_.equals(topicName)).toString()}")
-      val topic = scala.io.StdIn.readLine()
-      if(topics.contains(topic) && topic.nonEmpty) {
-        println(s"write you message for $topic")
+      println("Do you want to stop the consumer? y/n")
+      val stopResponse = scala.io.StdIn.readLine()
+      if (stopResponse.equals("y")) {
+        consumer.stopConsuming()
+        var restart = true
+        while(restart){
+          println("Do you want to restart the consumer? y/n")
+          val restartResponse = scala.io.StdIn.readLine()
+          if(restartResponse.equals("y")) {
+            restart = false
+            consumer.startConsuming()
+            println("Consumer restarted.")
+          }
+        }
+
+      }
+      println(s"$topicName, choose a user to send a message between: ${topics.filter(!_.equals(topicName)).toString()}")
+      val recipient = scala.io.StdIn.readLine()
+      if(topics.contains(recipient) && recipient.nonEmpty) {
+        println(s"write you message for $recipient")
         val message = scala.io.StdIn.readLine()
-        producer.sendMessage(topic, topicName, message)
+        producer.sendMessage(recipient, topicName, message)
       }
       else
         println("this username doesn't exist")
