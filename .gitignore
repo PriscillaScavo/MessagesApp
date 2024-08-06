@@ -1,0 +1,10 @@
+#IDEs
+.idea/
+.metals/
+*.iml
+
+# build tool
+target/
+
+.env
+*.env
