@@ -1,4 +1,4 @@
-import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer}
+import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord, ConsumerRecords, KafkaConsumer}
 import org.apache.kafka.common.errors.WakeupException
 import org.apache.kafka.common.serialization.StringDeserializer
 
@@ -17,15 +17,17 @@ class KafkaConsumerWrapper(bootstrapServers: String, groupId: String, topicName:
 
   private val consumer = new KafkaConsumer[String, String](consumerProps)
   @volatile private var running = false
+  private var activeSubscriptions = Set(topicName)
 
   def startConsuming(): Unit = {
     running = true
     new Thread(() => {
       try {
         while (running) {
-            consumer.subscribe(List(topicName).asJava)
+            consumer.subscribe(activeSubscriptions.asJava)
             val records = consumer.poll(java.time.Duration.ofMillis(100))
             for (record <- records.asScala) {
+              checkGroupSubscription(record)
               println(s"${record.value()}")
             }
         }
@@ -34,6 +36,22 @@ class KafkaConsumerWrapper(bootstrapServers: String, groupId: String, topicName:
         case ex: Throwable => println(s"Exception: $ex")
       }
     }).start()
+  }
+  def checkGroupSubscription(record: ConsumerRecord[String, String]) = {
+    val headers = record.headers()
+    val labelValue = headers.lastHeader("label") match {
+      case null => "N/A"
+      case header => new String(header.value())
+    }
+    if(labelValue.equals("group")){
+      val from = new String(headers.lastHeader("from").value())
+      val groupName = record.value()
+      activeSubscriptions = activeSubscriptions + groupName
+      if (from.equals(topicName))
+        println(s"$groupName was created successfully")
+      else
+      println(s"you were added to $groupName by $from")
+    }
   }
 
   def stopConsuming(): Unit = {

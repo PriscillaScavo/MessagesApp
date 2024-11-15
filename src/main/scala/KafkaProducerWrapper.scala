@@ -16,4 +16,11 @@ class KafkaProducerWrapper(bootstrapServers: String) {
     producer.send(record)
     println("Message succeed sent.")
   }
+
+  def groupSubscription(topic: String, topicName: String, groupName: String): Unit = {
+    val record = new ProducerRecord[String, String](topic, groupName)
+    record.headers().add("label", "group".getBytes()).add("from", topicName.getBytes())
+    producer.send(record)
+  }
+
 }
